@@ -1,0 +1,159 @@
+name: 🚀 Deploy OTA Pages
+
+on:
+  # 手动执行
+  workflow_dispatch:
+
+  # master 有修改时自动部署
+  push:
+    branches:
+      - master
+
+  # 每小时检查一次上游最新 Release
+  schedule:
+    - cron: "0 * * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    name: 📦 Build & Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      # ==========================================================
+      # 1. 获取 master 分支源码
+      # ==========================================================
+      - name: 📥 Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: master
+
+      # ==========================================================
+      # 2. 获取上游最新 Release
+      # ==========================================================
+      - name: 🔎 获取最新 Release
+        id: release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          API="https://api.github.com/repos/MinimaxFlora/My-OpenWrt-Firmware/releases/latest"
+
+          RELEASE_JSON=$(curl -fsSL \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "$API")
+
+          TAG_NAME=$(echo "$RELEASE_JSON" | jq -r '.tag_name')
+
+          OTA_URL=$(echo "$RELEASE_JSON" | jq -r '
+            .assets[]
+            | select(.name == "ota.json")
+            | .browser_download_url
+          ')
+
+          if [ -z "$TAG_NAME" ] || [ "$TAG_NAME" = "null" ]; then
+            echo "❌ 无法获取最新 Release Tag"
+            exit 1
+          fi
+
+          if [ -z "$OTA_URL" ] || [ "$OTA_URL" = "null" ]; then
+            echo "❌ 最新 Release 中没有 ota.json"
+            exit 1
+          fi
+
+          echo "======================================"
+          echo "🏷️ Latest Release: $TAG_NAME"
+          echo "📄 OTA URL       : $OTA_URL"
+          echo "======================================"
+
+          echo "tag=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "ota_url=$OTA_URL" >> "$GITHUB_OUTPUT"
+
+      # ==========================================================
+      # 3. 创建发布目录
+      # ==========================================================
+      - name: 📁 准备 Pages 文件
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p dist/openwrt-25.12
+
+          # -----------------------------------------------
+          # 从 master 复制网页文件
+          # -----------------------------------------------
+
+          cp index.html dist/
+
+          mkdir -p dist/css
+          cp -r css/* dist/css/
+
+          mkdir -p dist/js
+          cp -r js/* dist/js/
+
+          # GitHub Pages 禁用 Jekyll
+          touch dist/.nojekyll
+
+          # -----------------------------------------------
+          # 下载最新 OTA
+          # -----------------------------------------------
+
+          curl -fL \
+            --retry 5 \
+            --retry-delay 3 \
+            --connect-timeout 10 \
+            --max-time 120 \
+            "${{ steps.release.outputs.ota_url }}" \
+            -o dist/openwrt-25.12/ota.json
+
+          echo "✅ Pages 文件准备完成"
+
+      # ==========================================================
+      # 4. 校验 ota.json
+      # ==========================================================
+      - name: ✅ 校验 OTA JSON
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          jq empty dist/openwrt-25.12/ota.json
+
+          echo "✅ ota.json JSON 格式正确"
+
+      # ==========================================================
+      # 5. 部署 dist 到 gh-pages
+      # ==========================================================
+      - name: 🚀 部署到 gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./dist
+
+          # 保留自定义域名文件
+          keep_files: true
+
+          # 自动提交信息
+          commit_message: |
+            deploy: OTA ${{ steps.release.outputs.tag }}
+
+      # ==========================================================
+      # 6. 输出访问地址
+      # ==========================================================
+      - name: 🌐 输出 Pages 地址
+        run: |
+          echo "=============================================="
+          echo "✅ GitHub Pages 部署完成"
+          echo
+          echo "🌐 GitHub Pages:"
+          echo "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
+          echo
+          echo "📡 OTA JSON:"
+          echo "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/openwrt-25.12/ota.json"
+          echo
+          echo "🏷️ Release:"
+          echo "${{ steps.release.outputs.tag }}"
+          echo "=============================================="
