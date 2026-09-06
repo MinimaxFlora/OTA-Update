@@ -1,4 +1,3 @@
-```yaml
 name: 🔄 Sync OpenWrt OTA
 
 on:
@@ -118,4 +117,3 @@ jobs:
           echo "📄 文件: openwrt-25.12/ota.json"
           echo "🌐 URL: https://api.kejizero.xyz/openwrt-25.12/ota.json"
           echo "======================================"
-```
