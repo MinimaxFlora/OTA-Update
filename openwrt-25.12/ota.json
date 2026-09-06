@@ -1,0 +1,9 @@
+{
+  "x86_64": [
+    {
+      "build_date": "1788597442",
+      "sha256sum": "1e86c56913e01670b6c8f61732fcbe6dad717ff63868ceeb712c46f8fb413983",
+      "url": "https://github.com/MinimaxFlora/My-OpenWrt-Firmware/releases/download/ZeroWrt_2026.09.05-083719/openwrt-x86-64-generic-squashfs-combined-efi.img.gz"
+    }
+  ]
+}
