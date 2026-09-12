@@ -1,9 +1,9 @@
 {
   "x86_64": [
     {
-      "build_date": "1788968345",
-      "sha256sum": "b50cde330d45b13b5a13f8812edb2e776014959e06b033e05b2ee8854b502241",
-      "url": "https://gh-proxy.kejizero.xyz/https://github.com/MinimaxFlora/My-OpenWrt-Firmware/releases/download/ZeroWrt_2026.09.09-153905/zerowrt-x86-64-generic-squashfs-combined-efi.img.gz",
+      "build_date": "1789193713",
+      "sha256sum": "38051a878cdcb5e6124eae36ff84d26fad54bf05bc2df8feead6b956c6e6f648",
+      "url": "https://gh-proxy.kejizero.xyz/https://github.com/MinimaxFlora/My-OpenWrt-Firmware/releases/download/ZeroWrt_2026.09.12-061513/zerowrt-x86-64-generic-squashfs-combined-efi.img.gz",
       "logs": "### ZeroWrt x86_64 固件更新日志\n- **内核版本**：升级至 Linux Kernel 6.12.103\n- **系统核心**：同步 OpenWrt 最新源码与基础依赖\n- **网络性能**：优化 x86 架构下的网卡驱动兼容性与中断负载均衡\n- **系统维护**：常规插件更新及安全补丁修复"
     }
   ]
